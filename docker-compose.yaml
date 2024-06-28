@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  fastapi_trading:
+    build: .
+    container_name: fastapi_trading
+    ports:
+      - '8000:8000'
+    environment:
+      - HOST=${HOST}
+      - PORT=${PORT}
+      - DATABASE_URL=${DATABASE_URL}
+      - MONGODB_URL=${MONGODB_URL}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - TWITTER_API_KEY=${TWITTER_API_KEY}
+      - TWITTER_API_SECRET_KEY=${TWITTER_API_SECRET_KEY}
+      - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
+      - TWITTER_BEARER_TOKEN=${TWITTER_BEARER_TOKEN}
+      - TWITTER_BASE_URL=${TWITTER_BASE_URL}
+      - WEBSOCKET_HOST=${WEBSOCKET_HOST}
+      - WEBSOCKET_PORT=${WEBSOCKET_PORT}
+    volumes:
+      - .:/app
+    restart: always
