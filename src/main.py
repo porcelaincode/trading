@@ -32,8 +32,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, debug=True)
 
-app.include_router(icici_breeze.router, prefix="/api/v1/brokers/icici")
-app.include_router(kotak_neo.router, prefix="/api/v1/brokers/kotak")
+app.include_router(icici_breeze.router, prefix="/v1/brokers/icici")
+app.include_router(kotak_neo.router, prefix="/v1/brokers/kotak")
 
 
 @app.middleware("http")
