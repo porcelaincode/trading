@@ -10,6 +10,7 @@ from database import sqlite
 from ws.socket_base import WebSocketBase
 from config import env
 
+
 class WebSocket(WebSocketBase):
     def __init__(self, logger: Logger):
         self.clients = set()
@@ -62,7 +63,8 @@ class WebSocket(WebSocketBase):
         await self.broadcast("signal", data)
 
     def run(self):
-        server = websockets.serve(self.handler, env.WEBSOCKET_HOST, env.WEBSOCKET_PORT)
+        server = websockets.serve(
+            self.handler, env.WEBSOCKET_HOST, env.WEBSOCKET_PORT)
         self.logger.info('Websocket initialised')
         asyncio.get_event_loop().run_until_complete(server)
         asyncio.get_event_loop().run_forever()

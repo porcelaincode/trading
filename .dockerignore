@@ -1,0 +1,14 @@
+.idea
+.DS_Store
+build/
+venv
+dist/
+sdist/
+\*.egg-info/
+\*\*/**pycache**/
+.env
+
+# database files
+
+_.db
+_.db-journal

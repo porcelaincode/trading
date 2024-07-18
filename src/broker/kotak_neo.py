@@ -1,8 +1,6 @@
+from utils import fastapi_logger
 from broker.broker_base import BrokerBase
 from neo_api_client import NeoAPI
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class KotakNeo(BrokerBase):
@@ -21,7 +19,7 @@ class KotakNeo(BrokerBase):
         self.client.login(
             mobilenumber=mobile_number, password=password)
 
-        logger.info(
+        fastapi_logger.info(
             f"kotak_client initialized for mobile_number: {mobile_number} for consumer_key: {consumer_key}")
 
         return self.client
@@ -29,11 +27,11 @@ class KotakNeo(BrokerBase):
     def authorize(self, mobile_number, otp):
         try:
             res = self.client.session_2fa(OTP=otp)
-            logger.info(
+            fastapi_logger.info(
                 f"kotak_client successfully authenticated for {mobile_number}")
             return res
         except Exception as e:
-            logger.error(f"Failed to authenticate kotak_client: {e}")
+            fastapi_logger.error(f"Failed to authenticate kotak_client: {e}")
 
     def subscribe(self, instrument):
         pass

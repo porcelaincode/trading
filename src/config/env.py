@@ -6,7 +6,7 @@ load_dotenv()
 
 # server variables
 HOST = os.getenv("HOST")
-PORT = os.getenv("PORT")
+PORT = int(os.getenv("PORT"))
 
 # database variables
 DATABASE_URL = os.getenv("DATABASE_URL")

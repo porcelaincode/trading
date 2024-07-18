@@ -1,12 +1,9 @@
 # module imports
-import logging
+from fastapi import logger
 from datetime import datetime, timedelta
 
 # project imports
 from database import MongoDb
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
     backup_db = MongoDb()

@@ -1,5 +1,4 @@
-import logging
-
+from utils import fastapi_logger
 from trading import TradingEngine
 from database.sqlite_base import SqliteBase
 from broker.broker_base import BrokerBase
@@ -14,13 +13,13 @@ class TradingEngineManager:
 
     async def start(self):
         self.is_running = True
-        logging.info("Starting Trading Engine Manager")
+        fastapi_logger.info("Starting Trading Engine Manager")
         self.client.on_message = self.on_message
         self.client.on_error = self.on_error
 
     async def stop(self):
         self.is_running = False
-        logging.info("Stopping Trading Engine Manager")
+        fastapi_logger.info("Stopping Trading Engine Manager")
         for engine in self.engines.values():
             await engine.stop()
 
