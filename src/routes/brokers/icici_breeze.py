@@ -39,8 +39,11 @@ async def login_webhook(request: Request):
     if (payload['API_Session']):
         url = "https://alphaedge.vatsalpandya.com?authorized=True"
         response = RedirectResponse(url)
-        headers = {"broker": "ICICI",
-                   "datetime": datetime.get_local_datetime()}
+        headers = {
+            "broker": "ICICI",
+            "datetime": str(datetime.get_local_datetime()),
+            "token": "ABC123456",
+        }
         for key, value in headers.items():
             response.headers[key] = value
         return response
