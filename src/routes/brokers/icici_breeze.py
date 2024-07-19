@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
-from utils import fastapi_logger
+from utils import fastapi_logger, datetime
 
 router = APIRouter()
 
@@ -11,12 +11,12 @@ class InitiateBreezeLoginPayload(BaseModel):
     api_key: str
 
 
-@router.get('/intialize')
-async def initiate_login(request: InitiateBreezeLoginPayload):
+@router.post('/initialize')
+async def initiate_login(payload: InitiateBreezeLoginPayload):
     """
-    Request model for the /intialize endpoint
+    Request model for the /initialize endpoint
     """
-    return {"redirect_link": f'https://api.icicidirect.com/apiuser/login?api_key={request.api_key}'}
+    return JSONResponse(f'https://api.icicidirect.com/apiuser/login?api_key={payload.api_key}')
 
 
 @router.post("/login")
@@ -25,12 +25,24 @@ async def login_webhook(request: Request):
         payload = await request.json()
     except Exception as e:
         fastapi_logger.error(f"Failed to parse JSON payload: {e}")
+        message = e
         try:
             form_data = await request.form()
             payload = dict(form_data)
         except Exception as e:
             fastapi_logger.error(f"Failed to parse form data: {e}")
+            message = e
             payload = {}
 
-    fastapi_logger.info(f"Received login payload: {payload}")
-    return JSONResponse(content={"authorized": True})
+    fastapi_logger.info(f'Payload recieved: {payload}')
+
+    if (payload['API_Session']):
+        url = "https://alphaedge.vatsalpandya.com?authorized=True"
+        response = RedirectResponse(url)
+        headers = {"broker": "ICICI",
+                   "datetime": datetime.get_local_datetime()}
+        for key, value in headers.items():
+            response.headers[key] = value
+        return response
+    else:
+        return JSONResponse(content={"authorized": False, "message": message})
