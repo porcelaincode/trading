@@ -23,7 +23,7 @@ class SqliteBase(ABC):
         pass
 
     @abstractmethod
-    def cleanup(self):
+    def shutdown_cleanup(self):
         pass
 
     @abstractmethod

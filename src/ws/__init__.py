@@ -1,1 +1,1 @@
-from .socket import WebSocket
+from .socket import WebSocketManager

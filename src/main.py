@@ -1,12 +1,12 @@
 # module imports
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket
 from typing import Dict
 from contextlib import asynccontextmanager
 
 # project imports
 from database import Sqlite
 from config import env
-from ws import WebSocket
+from ws import WebSocketManager
 from trading import TradingEngineManager
 from utils import fastapi_logger
 
@@ -17,6 +17,7 @@ from routes.brokers import icici_breeze, kotak_neo
 # Global variable to hold the broker client instances
 broker_instances: Dict[str, BrokerBase] = {}
 trading_engine_managers: Dict[str, TradingEngineManager] = {}
+websocket_manager = WebSocketManager()
 db = None
 
 
@@ -44,10 +45,9 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-@app.websocket('/ws')
-async def websocket_endpoint():
-    ws = WebSocket(logger=fastapi_logger)
-    ws.run()
+@app.websocket('/')
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket_manager.handler(websocket)
 
 
 if __name__ == "__main__":
