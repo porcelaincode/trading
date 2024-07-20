@@ -45,7 +45,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-@app.websocket('/')
+@app.websocket('/ws')
 async def websocket_endpoint(websocket: WebSocket):
     await websocket_manager.handler(websocket)
 
