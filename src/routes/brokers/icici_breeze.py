@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from utils import fastapi_logger, datetime
+from utils import logger, datetime
 
 router = APIRouter()
 
@@ -24,17 +24,17 @@ async def login_webhook(request: Request):
     try:
         payload = await request.json()
     except Exception as e:
-        fastapi_logger.error(f"Failed to parse JSON payload: {e}")
+        logger.error(f"Failed to parse JSON payload: {e}")
         message = e
         try:
             form_data = await request.form()
             payload = dict(form_data)
         except Exception as e:
-            fastapi_logger.error(f"Failed to parse form data: {e}")
+            logger.error(f"Failed to parse form data: {e}")
             message = e
             payload = {}
 
-    fastapi_logger.info(f'Payload recieved: {payload}')
+    logger.info(f'Payload recieved: {payload}')
 
     if (payload['API_Session']):
         url = "https://alphaedge.vatsalpandya.com?authorized=True"

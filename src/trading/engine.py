@@ -1,5 +1,5 @@
 import asyncio
-from utils import fastapi_logger
+from utils import logger
 
 from broker.broker_base import BrokerBase
 
@@ -15,13 +15,13 @@ class TradingEngine:
 
     async def start(self):
         self.is_running = True
-        fastapi_logger.info(
+        logger.info(
             f"Starting Trading Engine for {self.instrument_prefix}")
         self.client.subscribe(
             self.instrument_prefix)
 
     async def stop(self):
         self.is_running = False
-        fastapi_logger.info(
+        logger.info(
             f"Stopping Trading Engine for {self.instrument_prefix}")
         self.client.unsubscribe(self.instrument_prefix)

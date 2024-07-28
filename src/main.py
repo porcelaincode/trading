@@ -8,11 +8,11 @@ from database import Sqlite
 from config import env
 from ws import WebSocketManager
 from trading import TradingEngineManager
-from utils import fastapi_logger
+from utils import logger
 
 # routes
 from broker.broker_base import BrokerBase
-from routes.brokers import icici_breeze, kotak_neo
+from routes.brokers import icici_breeze, kotak_neo, fyers_api, zerodha_kite
 
 # Global variable to hold the broker client instances
 broker_instances: Dict[str, BrokerBase] = {}
@@ -35,13 +35,15 @@ app = FastAPI(lifespan=lifespan, debug=True)
 
 app.include_router(icici_breeze.router, prefix="/api/v1/brokers/icici")
 app.include_router(kotak_neo.router, prefix="/api/v1/brokers/kotak")
+app.include_router(fyers_api.router, prefix="/api/v1/brokers/fyers")
+app.include_router(zerodha_kite.router, prefix="/api/v1/brokers/zerodha")
 
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    fastapi_logger.info(f"Incoming request: {request.method} {request.url}")
+    logger.info(f"Incoming request: {request.method} {request.url}")
     response = await call_next(request)
-    fastapi_logger.info(f"Response status: {response.status_code}")
+    logger.info(f"Response status: {response.status_code}")
     return response
 
 

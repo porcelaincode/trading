@@ -1,1 +1,1 @@
-from .logger import fastapi_logger
+from .logger import logger

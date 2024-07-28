@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from broker import KotakNeo
-from utils import client as client_utils, fastapi_logger
+from utils import client as client_utils, logger
 from trading import TradingEngineManager
 from database import Sqlite
 
@@ -31,7 +31,7 @@ async def authorize(req: InitializeClientRequest):
 
     if client_key in broker_instances[req.broker].keys():
         message = f'Broker client for this registered mobile number {req.mobilenumber}, is already registered'
-        fastapi_logger.info(message)
+        logger.info(message)
         return message
 
     client = KotakNeo()
@@ -40,10 +40,10 @@ async def authorize(req: InitializeClientRequest):
     if res:
         broker_instances[client_key] = res
         message = f'Successfully initialized broker client for kotak_neo. Authorize with otp sent to registered mobile number: {req.mobilenumber}'
-        fastapi_logger.info(message)
+        logger.info(message)
     else:
         message = f'Error initializing client with registered mobile number: {req.mobilenumber}'
-        fastapi_logger.error(message)
+        logger.error(message)
 
     return {'message': message}
 
@@ -78,7 +78,7 @@ async def authorize(req: OTPRequest):
                 mobile_number=req.mobile_number, otp=req.otp)
         case _:
             message = 'We are not supporting the requested broker at the moment'
-            fastapi_logger.error(message)
+            logger.error(message)
             return {message: message}
 
     if client_key in trading_engine_managers.keys():

@@ -6,9 +6,8 @@ from fastapi import WebSocket
 # project imports
 from database import Sqlite
 from ws.socket_base import WebSocketBase
-from config import env
 from utils.datetime import get_local_datetime
-from utils.logger import fastapi_logger
+from utils import logger
 
 
 class WebSocketManager(WebSocketBase):
@@ -31,7 +30,7 @@ class WebSocketManager(WebSocketBase):
                 data = json.loads(data)
                 await self.handle_message(data)
         except Exception as e:
-            fastapi_logger.error(
+            logger.error(
                 'Disruption in websocket connection. Disconnecting client with exception', e)
             await self.disconnect(websocket)
 
@@ -72,6 +71,6 @@ class WebSocketManager(WebSocketBase):
     # def run(self):
     #     server = websockets.serve(
     #         self.handler, env.WEBSOCKET_HOST, env.WEBSOCKET_PORT)
-    #     self.fastapi_logger.info('Websocket initialised')
+    #     self.logger.info('Websocket initialised')
     #     asyncio.get_event_loop().run_until_complete(server)
     #     asyncio.get_event_loop().run_forever()
