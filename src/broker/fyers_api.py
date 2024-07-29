@@ -1,6 +1,5 @@
 from utils import logger
 from broker.broker_base import BrokerBase
-from fyers_api import accessToken
 from fyers_apiv3 import fyersModel
 
 
@@ -8,26 +7,31 @@ class FyersAPI(BrokerBase):
     def __init__(self, authorized=False):
         self.client: fyersModel = None
         self.authorized = authorized
+        self.session: fyersModel.SessionModel = None
 
     def initialize(self, app_id, app_secret, redirect_uri):
+        self.session = fyersModel.SessionModel(
+            client_id=self.app_id,
+            secret_key=self.app_secret,
+            redirect_uri=self.redirect_uri,
+            response_type='code',
+            grant_type='authorization_code'
+        )
+        generateTokenUrl = self.session.generate_authcode()
+
         self.app_id = app_id
         self.app_secret = app_secret
-        self.redirect_uri = redirect_uri
+        self.redirect_uri = generateTokenUrl
 
         logger.info(
             f"Fyers client initialized with app_id: {app_id} and redirect_uri: {redirect_uri}")
 
     def authorize(self, authorization_code):
         try:
-            session = accessToken.SessionModel(
-                client_id=self.app_id,
-                secret_key=self.app_secret,
-                redirect_uri=self.redirect_uri,
-                response_type='code',
-                grant_type='authorization_code'
-            )
-            session.set_token(authorization_code)
-            response = session.generate_token()
+            self.session = fyersModel.SessionModel(
+                client_id=self.app_id, secret_key=self.app_secret, grant_type=authorization_code)
+            self.session.set_token(authorization_code)
+            response = self.session.generate_token()
             self.access_token = response['access_token']
             self.client = fyersModel.FyersModel(
                 client_id=self.app_id, token=self.access_token)
