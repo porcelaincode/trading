@@ -19,6 +19,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 # NEO_PASSWORD = os.getenv("NEO_PASSWORD")
 # ENVIRONMENT = os.getenv("ENVIRONMENT")
 
+FYERS_WEBHOOK_SECRET = os.getenv('FYERS_WEBHOOK_SECRET')
+
 
 # database variables
 WEBSOCKET_HOST = os.getenv("WEBSOCKET_HOST")

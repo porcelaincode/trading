@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
 
@@ -6,6 +6,10 @@ from broker.fyers_api import FyersAPI
 from utils import client as client_utils, logger
 from trading import TradingEngineManager
 from database import Sqlite
+from config import env
+
+import hmac
+import hashlib
 
 router = APIRouter()
 
@@ -85,3 +89,57 @@ async def authorize(req: AuthorizationRequest):
     await manager.start()
 
     return {"message": f'Trading manager initialized for client with app_id {req.app_id}.'}
+
+
+class FyersWebhookRequest(BaseModel):
+    event_type: str
+    data: dict
+
+
+def verify_signature(request: Request, received_signature: str):
+    body = request.body()
+    computed_signature = hmac.new(
+        key=env.FYERS_WEBHOOK_SECRET.encode(),
+        msg=body,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(received_signature, computed_signature)
+
+
+@router.post("/webhook")
+async def fyers_webhook(req: FyersWebhookRequest, x_fyers_signature: Optional[str] = Header(None)):
+    if x_fyers_signature is None:
+        logger.error("Missing x-fyers-signature header")
+        raise HTTPException(
+            status_code=400, detail="Missing x-fyers-signature header")
+
+    request_body = await req.body()
+    if not verify_signature(request_body, x_fyers_signature):
+        logger.error("Invalid signature")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    event_type = req.event_type
+    event_data = req.data
+
+    logger.info(
+        f"Received webhook event: {event_type} with data: {event_data}")
+
+    match event_type:
+        case 'Pending':
+            # pending event
+            pass
+        case 'Cancelled':
+            # cancelled event
+            pass
+        case 'Rejected':
+            # rejected event
+            pass
+        case 'Traded':
+            # traded event
+            pass
+        case _:
+            logger.error(f"Unhandled event type: {event_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Unhandled event type: {event_type}")
+
+    return {"message": "Webhook received successfully"}
