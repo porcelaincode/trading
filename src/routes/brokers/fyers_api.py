@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException, Header
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import Optional
 
@@ -143,3 +144,20 @@ async def fyers_webhook(req: FyersWebhookRequest, x_fyers_signature: Optional[st
                 status_code=400, detail=f"Unhandled event type: {event_type}")
 
     return {"message": "Webhook received successfully"}
+
+
+@router.get("/login")
+async def login(
+    request: Request,
+    s: Optional[str] = None,
+    code: Optional[str] = None,
+    auth_code: Optional[str] = None,
+    state: Optional[str] = None
+):
+    query_params = request.query_params
+    logger.info(f"Query parameters received: {query_params}")
+
+    # do something with the params
+
+    redirect_url = "https://alphaedge.vatsalpandya.com?status=authorized"
+    return RedirectResponse(url=redirect_url)
