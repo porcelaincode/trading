@@ -19,5 +19,13 @@ class BrokerBase(ABC):
         pass
 
     @abstractmethod
+    async def get_market_data(self):
+        pass
+
+    @abstractmethod
     def place_order(self):
+        pass
+
+    @abstractmethod
+    def cleanup(self, engine_ids: list[str]):
         pass

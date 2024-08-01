@@ -21,7 +21,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 FYERS_WEBHOOK_SECRET = os.getenv('FYERS_WEBHOOK_SECRET')
 
-
 # database variables
 WEBSOCKET_HOST = os.getenv("WEBSOCKET_HOST")
 WEBSOCKET_PORT = os.getenv("WEBSOCKET_PORT")
@@ -37,3 +36,16 @@ TWITTER_BASE_URL = os.getenv('TWITTER_BASE_URL')
 # backup base
 MONGODB_URL = os.getenv('MONGODB_URL')
 MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
+
+# local database
+SQLITE_DATABASE = os.getenv('SQLITE_DATABASE')
+SQLITE_DB_PATH = os.getenv('SQLITE_DB_PATH')
+
+# cache database
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = os.getenv('REDIS_PORT')
+
+# messaging broker
+RABBITMQ_HOST = os.getenv('RABBITMQ_HOST')
+RABBITMQ_USER = os.getenv('RABBITMQ_USER')
+RABBITMQ_PASS = os.getenv('RABBITMQ_PASS')
