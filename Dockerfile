@@ -9,7 +9,7 @@ COPY . .
 
 ENV PYTHONPATH=/app/src
 
-RUN pip install --no-cache-dir --no-deps -r requirements.txt
+RUN pip install --no-deps -r requirements.txt
 
 EXPOSE 8000
 

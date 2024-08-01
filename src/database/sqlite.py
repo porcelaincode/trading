@@ -38,14 +38,29 @@ class Sqlite(SqliteBase):
                                 placed_at TIMESTAMP)''')
 
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS active_positions (
-                                id INTEGER PRIMARY KEY,
-                                consumer_key TEXT
-                                position_data TEXT)''')
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                client_id TEXT,
+                                broker TXT,
+                                symbol TEXT,
+                                qty REAL,
+                                entry_price REAL,
+                                exit_price REAL,
+                                status TEXT,
+                                created_at TEXT,
+                                closed_at TEXT)''')
 
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS closed_positions (
-                                id INTEGER PRIMARY KEY,
-                                consumer_key TEXT
-                                position_data TEXT,
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                position_id INTEGER,
+                                client_id TEXT,
+                                broker TXT,
+                                symbol TEXT,
+                                qty REAL,
+                                entry_price REAL,
+                                exit_price REAL,
+                                status TEXT,
+                                created_at TEXT,
+                                closed_at TEXT
                                 closed_at TIMESTAMP)''')
 
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS options_greeks (
