@@ -5,7 +5,6 @@ from typing import Optional
 from broker import KotakNeo
 from utils import client as client_utils, logger
 from trading import TradingEngineManager
-from database import Sqlite
 
 router = APIRouter()
 
@@ -84,8 +83,7 @@ async def authorize(req: OTPRequest):
     if client_key in trading_engine_managers.keys():
         return {"message": f'Manager for mobile number {req.mobilenumber} already exists.'}
 
-    db = Sqlite()
-    manager = TradingEngineManager(broker_client, db)
+    manager = TradingEngineManager(broker_client)
     trading_engine_managers[client_key] = manager
     await manager.start()
 

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 # project imports
 from database import Sqlite
-from config import env
+from app_config import env
 from ws import WebSocketManager
 from trading import TradingEngineManager, MarketDataManager
 from utils import logger
@@ -22,7 +22,7 @@ trading_engine_managers: Dict[str, TradingEngineManager] = {}
 websocket_manager = WebSocketManager()
 # marketdata_manager = MarketDataManager()
 
-db = None
+db: Sqlite = None
 
 
 @asynccontextmanager

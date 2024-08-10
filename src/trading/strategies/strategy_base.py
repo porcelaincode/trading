@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
+from moving_average_crossover import MovingAverageCrossover
+
 
 class BaseStrategy(ABC):
     @abstractmethod

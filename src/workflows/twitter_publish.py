@@ -1,7 +1,7 @@
 # module imports
 import requests
 import requests_oauthlib
-from config import env
+from app_config import env
 
 # project imports
 from database import Sqlite
@@ -33,8 +33,8 @@ def publish_tweet(text):
 
 
 if __name__ == '__main__':
-    db = Sqlite()
-    stats = db.today_stats()
+    sqlite_db = Sqlite()
+    stats = sqlite_db.today_stats()
 
     text = f"Days P&L: {stats['abs_percentage']}%\nBest Win: {stats['best_win']}%\nTotal Trades: {stats['total_trades']}\n\nPeak GPU Load: {stats['peak_gpu_load']}%\nAverage GPU Load: {stats['avg_gpu_load']}%\nTotal Computation Time: {stats['total_comp_time']}ms/tick\nTrade Signal Generation: {stats['trade_sig_gen']}ms\nSuccess Rate: {stats['scs_rate']}%"
 

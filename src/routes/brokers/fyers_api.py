@@ -6,8 +6,7 @@ from typing import Optional
 from broker.fyers_api import FyersAPI
 from utils import client as client_utils, logger
 from trading import TradingEngineManager
-from database import Sqlite
-from config import env
+from app_config import env
 
 import hmac
 import hashlib
@@ -84,8 +83,7 @@ async def authorize(req: AuthorizationRequest):
     if client_key in trading_engine_managers.keys():
         return {"message": f'Trading manager for app_id {req.app_id} already exists.'}
 
-    db = Sqlite()
-    manager = TradingEngineManager(broker_client, db)
+    manager = TradingEngineManager(broker_client)
     trading_engine_managers[client_key] = manager
     await manager.start()
 

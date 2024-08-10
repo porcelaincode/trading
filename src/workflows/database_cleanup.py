@@ -6,9 +6,8 @@ from datetime import datetime, timedelta
 from database import MongoDb
 
 if __name__ == '__main__':
-    backup_db = MongoDb()
-
     # Transfer data from SQLite to MongoDB
+    backup_db = MongoDb()
     backup_db.transfer_data_from_sqlite()
 
     start_date = datetime.now() - timedelta(days=1)

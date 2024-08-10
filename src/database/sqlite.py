@@ -5,8 +5,9 @@ from datetime import datetime
 
 # project imports
 from database.sqlite_base import SqliteBase
-from database.mongo_base import MongoBase
-from config import env
+from database import MongoDb
+from app_config import env
+from utils import get_local_datetime
 
 
 class Sqlite(SqliteBase):
@@ -17,29 +18,42 @@ class Sqlite(SqliteBase):
         self.create_tables()
 
     def create_tables(self):
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                brokerClientId TEXT,
+                                brokerName TEXT,
+                                apiKey TEXT,
+                                apiSecret TEXT,
+                                accessToken TEXT,
+                                isAdmin INTEGER,
+                                updated_at DATETIME,
+                                created_at DATETIME)''')
+
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS instruments (
                                 instrument_token INTEGER PRIMARY KEY,
-                                exchange TEXT,
-                                tradingsymbol TEXT,
+                                exchange TEXT NOT NULL,
+                                tradingsymbol TEXT NOT NULL,
                                 name TEXT,
-                                expiry DATE,
+                                expiry DATETIME,
                                 strike REAL,
                                 tick_size REAL,
-                                lot_size INTEGER,
+                                lot_size INTEGER NOT NULL,
                                 instrument_type TEXT,
                                 segment TEXT,
                                 exchange_token TEXT)''')
 
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS orders (
                                 order_id TEXT PRIMARY KEY,
+                                userId TEXT,
                                 order_params TEXT,
                                 consumer_key TEXT
                                 status TEXT,
-                                placed_at TIMESTAMP)''')
+                                placed_at DATETIME)''')
 
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS active_positions (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 client_id TEXT,
+                                userId TEXT,
                                 broker TXT,
                                 symbol TEXT,
                                 qty REAL,
@@ -52,6 +66,7 @@ class Sqlite(SqliteBase):
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS closed_positions (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 position_id INTEGER,
+                                userId TEXT,
                                 client_id TEXT,
                                 broker TXT,
                                 symbol TEXT,
@@ -61,7 +76,16 @@ class Sqlite(SqliteBase):
                                 status TEXT,
                                 created_at TEXT,
                                 closed_at TEXT
-                                closed_at TIMESTAMP)''')
+                                closed_at DATETIME)''')
+
+        # TODO: implement when storing instance in memory is introduced
+        # self.cursor.execute('''CREATE TABLE IF NOT EXISTS instances (
+        #                         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #                         userId TEXT,
+        #                         clientId TEXT,
+        #                         broker TXT,
+        #                         instance BLOB
+        #                         created_at TEXT)''')
 
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS options_greeks (
                                 id INTEGER PRIMARY KEY,
@@ -72,18 +96,82 @@ class Sqlite(SqliteBase):
                                 theta REAL,
                                 vega REAL,
                                 rho REAL,
-                                timestamp TIMESTAMP)''')
+                                DATETIME DATETIME)''')
 
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS subscriptions (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                userId TEXT,
                                 tradingsymbol TEXT,
-                                subscribed_at TIMESTAMP,
+                                clientId TEXT,
                                 broker TEXT,
                                 status TEXT,
+                                subscribed_at DATETIME,
                                 ltp_subscribed REAL,
                                 ltp_unsubscribed REAL)''')
 
         self.conn.commit()
+
+    def create_user(self, brokerClientId: str, brokerName: str, apiKey: str, apiSecret: str, isAdmin: int = 0):
+        self.cursor.execute(
+            '''SELECT COUNT(*) FROM users WHERE brokerClientId = ? AND brokerName = ?''', (brokerClientId, brokerName))
+
+        user_exists = self.cursor.fetchone()[0]
+
+        if user_exists:
+            return {
+                'error': True,
+                'message': 'User already exists'
+            }
+
+        created_at = get_local_datetime()
+
+        self.cursor.execute('''INSERT INTO users (brokerClientId, brokerName, apiKey, apiSecret, isAdmin, created_at) VALUES (?, ?, ?, ?, ?, created_at)''',
+                            (brokerClientId, brokerName, apiKey, apiSecret, isAdmin, created_at))
+
+        self.conn.commit()
+        return {
+            'error': False,
+            'message': 'New user created'
+        }
+
+    def update_user_token(self, brokerClientId: str, brokerName: str, accessToken: str):
+        self.cursor.execute('''
+          SELECT COUNT(*) FROM users WHERE brokerClientId = ? AND brokerName = ?
+      ''', (brokerClientId, brokerName))
+
+        user_exists = self.cursor.fetchone()[0]
+
+        if user_exists > 0:
+            self.cursor.execute('''
+              UPDATE users
+              SET accessToken = ?
+              WHERE brokerClientId = ? AND brokerName = ?
+          ''', (accessToken, brokerClientId, brokerName))
+            self.conn.commit()
+            return {
+                'error': False,
+                'message': 'User record updated.'
+            }
+        else:
+            return {
+                'error': True,
+                'message': 'User with the given clientId and broker does not exist.'
+            }
+
+    def store_client_instance(self, clientId, broker, instance):
+        created_at = get_local_datetime()
+        self.cursor.execute('''INSERT INTO instances 
+                              (clientId, broker, instance, created_at) 
+                              VALUES (?, ?, ?, ?)''',
+                            (clientId, broker, instance, created_at))
+        self.conn.commit()
+        pass
+
+    def get_client_instance(self, clientId, broker):
+        self.cursor.execute(
+            'SELECT instance FROM instances WHERE clientId = ? AND broker = ?', (clientId, broker))
+        serialized_instance = self.cursor.fetchone()[0]
+        return serialized_instance
 
     def store_instruments(self):
         response = requests.get("http://api.kite.trade/instruments")
@@ -130,7 +218,21 @@ class Sqlite(SqliteBase):
         }
         return data
 
-    def create_backup(self, mongo: MongoBase):
+    # def create_backup(self):
+        users_data = []
+        mongo_db = MongoDb()
+        self.cursor.execute("SELECT * FROM users")
+        all_users = self.cursor.fetchall()
+        for user in all_users:
+            user_data = {
+                "id": user[0],
+                "position_data": user[1],
+                "closed_at": user[2]
+                # other fields
+            }
+            users_data.append(user_data)
+        mongo_db.store_users(users_data)
+
         positions_data = []
         self.cursor.execute("SELECT * FROM closed_positions")
         closed_positions = self.cursor.fetchall()
@@ -141,7 +243,7 @@ class Sqlite(SqliteBase):
                 "closed_at": position[2]
             }
             positions_data.append(position_data)
-        mongo.store_closed_position(positions_data)
+        mongo_db.store_closed_position(positions_data)
 
         greeks_data = []
         self.cursor.execute("SELECT * FROM options_greeks")
@@ -156,10 +258,10 @@ class Sqlite(SqliteBase):
                 "theta": greek[5],
                 "vega": greek[6],
                 "rho": greek[7],
-                "timestamp": greek[8]
+                "DATETIME": greek[8]
             }
             greeks_data.append(greek_data)
-        mongo.store_options_data(positions_data)
+        mongo_db.store_options_data(positions_data)
 
         orders_data = []
         self.cursor.execute("SELECT * FROM orders")
@@ -172,7 +274,7 @@ class Sqlite(SqliteBase):
                 "placed_at": order[3]
             }
             orders_data.append(order_data)
-        mongo.store_orders(orders_data)
+        mongo_db.store_orders(orders_data)
 
         self.cursor.execute("DELETE FROM closed_positions")
         self.cursor.execute("DELETE FROM options_greeks")

@@ -1,6 +1,6 @@
 from utils import logger
 from trading import TradingEngine
-from database.sqlite_base import SqliteBase
+from database import Sqlite
 from broker.broker_base import BrokerBase
 from uuid import uuid4
 
@@ -10,12 +10,12 @@ class TradingEngineManager:
     Trading engine manager (TEM) exists in context of one engine manager per client and its broker. Each TEM can have one or more than one engines running. TEM keeps a record of total pnl of a client at a broker and actively keeps making attempts to minimize losses. TEM is responsible for emitting pnl events on a websocket channel that is unique per client and its broker. TEM stops all engines and exits from all positions if target or stoploss is met.
     '''
 
-    def __init__(self, client: BrokerBase, db: SqliteBase):
+    def __init__(self, client: BrokerBase):
         '''
         Initialize trading engine manager
         '''
         self.client = client
-        self.database = db
+        self.db = Sqlite()
         self.engines = {}
         self.is_running = False
 
@@ -26,6 +26,7 @@ class TradingEngineManager:
         self.client.on_message = self.on_message
         self.client.on_error = self.on_error
         logger.info("Starting Trading Engine Manager")
+        self.client.subscribe()
         self.is_running = True
 
     async def stop(self):

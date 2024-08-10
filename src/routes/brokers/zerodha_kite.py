@@ -5,7 +5,6 @@ from typing import Optional
 from broker.zerodha_kite import ZerodhaKite
 from utils import client as client_utils, logger
 from trading import TradingEngineManager
-from database import Sqlite
 
 router = APIRouter()
 
@@ -77,8 +76,7 @@ async def authorize(req: AuthorizationRequest):
     if client_key in trading_engine_managers.keys():
         return {"message": f'Trading manager for API key {req.api_key} already exists.'}
 
-    db = Sqlite()
-    manager = TradingEngineManager(broker_client, db)
+    manager = TradingEngineManager(broker_client)
     trading_engine_managers[client_key] = manager
     await manager.start()
 

@@ -1,4 +1,4 @@
-from .strategy_base import BaseStrategy
+from ..strategy_base import BaseStrategy
 from typing import Dict, List, Any
 from dataclasses import dataclass
 import numpy as np
