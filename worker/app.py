@@ -19,7 +19,7 @@ queue = connection.channel()
 
 
 def handleSignals(body):
-    # req.post(f'http://{fastapi_host}:{fastapi_port}/api/orders')
+    # req.post(f'http://{fastapi_host}:{fastapi_port}/api/signals')
     print('handleSignals: ', body)
 
 
@@ -32,10 +32,16 @@ def handlePositions(body):
     print('positionReq: ', body)
 
 
+def handleAppEvents(body):
+    # req.post(f'http://{fastapi_host}:{fastapi_port}/api/events')
+    print('appEvent: ', body)
+
+
 queue_handlers = {
     'orders': handleOrders,
     'positions': handlePositions,
-    'signals': handleSignals
+    'signals': handleSignals,
+    'app': handleAppEvents
 }
 
 

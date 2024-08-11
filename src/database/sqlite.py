@@ -124,10 +124,11 @@ class Sqlite(SqliteBase):
             }
 
         created_at = get_local_datetime()
-
-        self.cursor.execute('''INSERT INTO users (brokerClientId, brokerName, apiKey, apiSecret, isAdmin, created_at) VALUES (?, ?, ?, ?, ?, created_at)''',
+        self.cursor.execute('''
+                            INSERT INTO users (brokerClientId, brokerName, apiKey, apiSecret, isAdmin, created_at) 
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            ''',
                             (brokerClientId, brokerName, apiKey, apiSecret, isAdmin, created_at))
-
         self.conn.commit()
         return {
             'error': False,
@@ -142,11 +143,12 @@ class Sqlite(SqliteBase):
         user_exists = self.cursor.fetchone()[0]
 
         if user_exists > 0:
+            time = get_local_datetime()
             self.cursor.execute('''
               UPDATE users
-              SET accessToken = ?
+              SET accessToken = ?, updated_at = ?             
               WHERE brokerClientId = ? AND brokerName = ?
-          ''', (accessToken, brokerClientId, brokerName))
+          ''', (accessToken, time, brokerClientId, brokerName))
             self.conn.commit()
             return {
                 'error': False,

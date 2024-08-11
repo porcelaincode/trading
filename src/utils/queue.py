@@ -11,6 +11,7 @@ connection = pika.BlockingConnection(parameters)
 
 queue = connection.channel()
 
+queue.queue_declare(queue='app')
 
 queue.queue_declare(queue='signals')
 queue.queue_declare(queue='orders')

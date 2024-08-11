@@ -14,7 +14,7 @@ from utils import logger
 from broker.broker_base import BrokerBase
 from routes.brokers import icici_breeze, kotak_neo, fyers_api, zerodha_kite
 from routes.auth import users
-from routes.hooks import orders, positions, signals
+from routes.hooks import orders, positions, signals, events
 
 # Global variable to hold the broker client instances
 broker_instances: Dict[str, BrokerBase] = {}
@@ -47,6 +47,7 @@ app.include_router(users.router, prefix="/api/v1/auth/users")
 app.include_router(orders.router, prefix="/api/v1/hooks/orders")
 app.include_router(positions.router, prefix="/api/v1/hooks/positions")
 app.include_router(signals.router, prefix="/api/v1/hooks/signals")
+app.include_router(events.router, prefix="/api/v1/hooks/events")
 
 
 @app.middleware("http")
