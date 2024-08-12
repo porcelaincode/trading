@@ -3,8 +3,8 @@ from pymongo import MongoClient
 
 # project imports
 from database.mongo_base import MongoBase
-from database.sqlite import Sqlite
-from config import env
+
+from app_config import env
 
 
 class MongoDb(MongoBase):
@@ -16,6 +16,8 @@ class MongoDb(MongoBase):
 
     def create_collections(self):
         self.db.create_collection(
+            "users", capped=True, size=5242880, max=5000, check_exists=True)
+        self.db.create_collection(
             "trades", capped=True, size=5242880, max=5000, check_exists=True)
         self.db.create_collection(
             "options_data", capped=True, size=5242880, max=5000, check_exists=True)
@@ -26,6 +28,9 @@ class MongoDb(MongoBase):
 
     def store_trade(self, trade_data):
         self.db.trades.insert_many(trade_data)
+
+    def store_users(self, users_data):
+        self.db.users.insert_many(users_data)
 
     def store_options_data(self, options_data):
         self.db.options_data.insert_many(options_data)
@@ -62,8 +67,9 @@ class MongoDb(MongoBase):
         return list(orders)
 
     def transfer_data_from_sqlite(self):
-        sqlite = Sqlite()
-        sqlite.create_backup(mongo=self)
+        # sqlite_db = Sqlite()
+        # sqlite_db.create_backup(mongo=self)
+        pass
 
     def close(self):
         self.client.close()

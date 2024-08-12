@@ -4,7 +4,6 @@ import json
 from fastapi import WebSocket
 
 # project imports
-from database import Sqlite
 from ws.socket_base import WebSocketBase
 from utils.datetime import get_local_datetime
 from utils import logger
@@ -13,7 +12,6 @@ from utils import logger
 class WebSocketManager(WebSocketBase):
     def __init__(self):
         self.clients = []
-        self.db = Sqlite()
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()

@@ -1,12 +1,11 @@
 version: '3.8'
 
 services:
-  fastapi_trading:
-    image: fastapi_trading:latest
+  fastapi:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fastapi_trading
+    container_name: alphaedge_fastapi
     ports:
       - '${PORT}:${PORT}'
     environment:
@@ -22,6 +21,72 @@ services:
       - TWITTER_BASE_URL=$TWITTER_BASE_URL
       - WEBSOCKET_HOST=$WEBSOCKET_HOST
       - WEBSOCKET_PORT=$WEBSOCKET_PORT
+      - SQLITE_DB_PATH=$SQLITE_DB_PATH
+      - REDIS_HOST=$REDIS_HOST
+      - REDIS_PORT=$REDIS_PORT
+      - RABBITMQ_HOST=$RABBITMQ_HOST
+      - RABBITMQ_USER=$RABBITMQ_USER
+      - RABBITMQ_PASS=$RABBITMQ_PASS
     volumes:
       - .:/app
+    depends_on:
+      - rabbitmq
+      - sqlite
+      - redis
     restart: always
+    networks:
+      - app_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: alphaedge_rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=$RABBITMQ_USER
+      - RABBITMQ_DEFAULT_PASS=$RABBITMQ_PASS
+    networks:
+      - app_network
+
+  sqlite:
+    image: nouchka/sqlite3
+    container_name: alphaedge_sqlite
+    environment:
+      - SQLITE_DATABASE=$SQLITE_DATABASE
+    volumes:
+      - sqlite_data:/data
+    networks:
+      - app_network
+
+  redis:
+    image: redis:alpine
+    container_name: alphaedge_redis
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    networks:
+      - app_network
+
+  mq_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: alphaedge_mqworker
+    depends_on:
+      - rabbitmq
+      - fastapi
+    environment:
+      - RABBITMQ_HOST=$RABBITMQ_HOST
+      - RABBITMQ_USER=$RABBITMQ_USER
+      - RABBITMQ_PASS=$RABBITMQ_PASS
+      - HOST=$HOST
+      - PORT=$PORT
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  sqlite_data:
