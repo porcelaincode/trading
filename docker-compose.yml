@@ -1,0 +1,104 @@
+version: '3.8'
+services:
+  fastapi:
+    build:
+      context: ./
+      dockerfile: ./alphaedge/Dockerfile
+    container_name: alphaedge_fastapi
+    env_file:
+      - ./alphaedge/.env
+    ports:
+      - '${PORT}:${PORT}'
+    environment:
+      - HOST=$HOST
+      - PORT=$PORT
+      - REDIS_HOST=$REDIS_HOST
+      - REDIS_PORT=$REDIS_PORT
+      - REDIS_PASS=$REDIS_PASS
+      - RABBITMQ_HOST=$RABBITMQ_HOST
+      - RABBITMQ_USER=$RABBITMQ_USER
+      - RABBITMQ_PASS=$RABBITMQ_PASS
+    volumes:
+      - ./alphaedge/src:/app
+    depends_on:
+      - rabbitmq
+      - redis
+      - sqlite
+    restart: always
+    networks:
+      - app_network
+
+  redis:
+    build:
+      context: .
+      dockerfile: ./redis/Dockerfile
+    container_name: alphaedge_redis
+    env_file:
+      - ./redis/.env
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:${REDIS_PORT}'
+    environment:
+      - REDIS_PASS=${REDIS_PASS}
+      - REDIS_HOST=${REDIS_HOST}
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  rabbitmq:
+    build:
+      context: .
+      dockerfile: ./rabbitmq/Dockerfile
+    container_name: alphaedge_rabbitmq
+    env_file:
+      - ./rabbitmq/.env
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  workers:
+    build:
+      context: .
+      dockerfile: ./workers/Dockerfile
+    container_name: alphaedge_workers
+    env_file:
+      - ./workers/.env
+    depends_on:
+      - rabbitmq
+      - fastapi
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - HOST=$HOST
+      - PORT=$PORT
+    networks:
+      - app_network
+
+  sqlite:
+    build: ./sqlite
+    container_name: alphaedge_sqlite
+    volumes:
+      - sqlite_data:/app/data
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  sqlite_data:
+    driver: local
