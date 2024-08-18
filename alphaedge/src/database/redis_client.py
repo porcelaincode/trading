@@ -1,6 +1,12 @@
 from time import sleep
+import logging
+
 import redis
+
 from config import env
+
+logging.basicConfig(level=logging.INFO)
+redis_logger = logging.getLogger(__name__)
 
 redis_host = env.REDIS_HOST
 redis_port = int(env.REDIS_PORT) or 6379
@@ -21,21 +27,23 @@ class RedisClient:
         while retries < self.max_retries:
             try:
                 self.client.ping()
-                print("Connected to Redis!!!")
+                redis_logger.info("Connected to Redis!!!")
                 return
             except redis.ConnectionError:
                 retries += 1
-                print(f"Attempt {retries} to reconnect...")
+                redis_logger.info(f"Attempt {retries} to reconnect...")
                 sleep(retries * 0.5)
         raise Exception("Too many retries.")
 
     def _generate_key(self, key):
         return f"{self.prefix}:{key}"
 
+
 redis_client = RedisClient(prefix='alphaedge')
 
 
 class Store:
-  pass
+    pass
+
 
 store = Store()
