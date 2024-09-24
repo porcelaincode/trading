@@ -1,0 +1,5 @@
+# .dockerignore for SQLite
+.env
+.git
+*.log
+*.pid

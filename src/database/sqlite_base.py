@@ -5,25 +5,13 @@ class SqliteBase(ABC):
     @abstractmethod
     def create_tables(self):
         pass
-
+    
     @abstractmethod
-    def store_instruments(self):
+    def create_tables(self):
         pass
-
+    
     @abstractmethod
-    def store_order(self, order_id, order_params, status):
-        pass
-
-    @abstractmethod
-    def today_stats(self):
-        pass
-
-    @abstractmethod
-    def create_backup(self, mongo):
-        pass
-
-    @abstractmethod
-    def shutdown_cleanup(self):
+    def update_user_token(self):
         pass
 
     @abstractmethod

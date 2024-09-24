@@ -1,13 +1,11 @@
 # module imports
 import sqlite3
-import requests
-from datetime import datetime
+from typing import Dict, List, Any
 
 # project imports
-from database.sqlite_base import SqliteBase
-from database import MongoDb
-from app_config import env
-from utils import get_local_datetime
+from .sqlite_base import SqliteBase
+from ..config import env
+from ..utils import get_local_datetime
 
 
 class Sqlite(SqliteBase):
@@ -20,100 +18,61 @@ class Sqlite(SqliteBase):
     def create_tables(self):
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                brokerClientId TEXT,
-                                brokerName TEXT,
-                                apiKey TEXT,
-                                apiSecret TEXT,
-                                accessToken TEXT,
-                                isAdmin INTEGER,
+                                broker_client_id TEXT,
+                                broker_name TEXT,
+                                api_key TEXT,
+                                api_secret TEXT,
+                                access_token TEXT,
+                                is_admin INTEGER,
                                 updated_at DATETIME,
                                 created_at DATETIME)''')
 
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS instruments (
-                                instrument_token INTEGER PRIMARY KEY,
-                                exchange TEXT NOT NULL,
-                                tradingsymbol TEXT NOT NULL,
-                                name TEXT,
-                                expiry DATETIME,
-                                strike REAL,
-                                tick_size REAL,
-                                lot_size INTEGER NOT NULL,
-                                instrument_type TEXT,
-                                segment TEXT,
-                                exchange_token TEXT)''')
-
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS orders (
-                                order_id TEXT PRIMARY KEY,
-                                userId TEXT,
-                                order_params TEXT,
-                                consumer_key TEXT
-                                status TEXT,
-                                placed_at DATETIME)''')
-
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS active_positions (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                client_id TEXT,
-                                userId TEXT,
-                                broker TXT,
+                                user_id INTEGER,
+                                broker_client_id TEXT,
+                                broker_name TXT,
                                 symbol TEXT,
-                                qty REAL,
-                                entry_price REAL,
-                                exit_price REAL,
-                                status TEXT,
-                                created_at TEXT,
-                                closed_at TEXT)''')
-
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS closed_positions (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 position_id INTEGER,
-                                userId TEXT,
-                                client_id TEXT,
-                                broker TXT,
-                                symbol TEXT,
-                                qty REAL,
-                                entry_price REAL,
-                                exit_price REAL,
+                                holding_id INTEGER,
+                                quantity INTEGER,
+                                price REAL,
+                                order_type TEXT,
+                                product_type TEXT,
                                 status TEXT,
-                                created_at TEXT,
-                                closed_at TEXT
-                                closed_at DATETIME)''')
+                                updated_at DATETIME,
+                                created_at DATETIME,
+                                FOREIGN KEY (user_id) REFERENCES users(id))''')
 
-        # TODO: implement when storing instance in memory is introduced
-        # self.cursor.execute('''CREATE TABLE IF NOT EXISTS instances (
-        #                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        #                         userId TEXT,
-        #                         clientId TEXT,
-        #                         broker TXT,
-        #                         instance BLOB
-        #                         created_at TEXT)''')
-
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS options_greeks (
-                                id INTEGER PRIMARY KEY,
-                                tradingsymbol TEXT,
-                                ltp REAL,
-                                delta REAL,
-                                gamma REAL,
-                                theta REAL,
-                                vega REAL,
-                                rho REAL,
-                                DATETIME DATETIME)''')
-
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS subscriptions (
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS positions (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                userId TEXT,
-                                tradingsymbol TEXT,
-                                clientId TEXT,
-                                broker TEXT,
-                                status TEXT,
-                                subscribed_at DATETIME,
-                                ltp_subscribed REAL,
-                                ltp_unsubscribed REAL)''')
+                                user_id INTEGER,
+                                broker_client_id TEXT,
+                                broker_name TXT,
+                                symbol TEXT,
+                                quantity INTEGER,
+                                average_price REAL,
+                                product_type TEXT,
+                                created_at DATETIME,
+                                updated_at DATETIME,
+                                FOREIGN KEY (user_id) REFERENCES users(id))''')
 
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS holdings (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                user_id INTEGER,
+                                broker_client_id TEXT,
+                                broker_name TXT,
+                                symbol TEXT,
+                                quantity INTEGER,
+                                average_price REAL,
+                                updated_at DATETIME,
+                                created_at DATETIME,
+                                FOREIGN KEY (user_id) REFERENCES users(id))''')
         self.conn.commit()
 
-    def create_user(self, brokerClientId: str, brokerName: str, apiKey: str, apiSecret: str, isAdmin: int = 0):
+    def create_user(self, broker_client_id: str, broker_name: str, api_key: str, api_secret: str, is_admin: int = 0):
         self.cursor.execute(
-            '''SELECT COUNT(*) FROM users WHERE brokerClientId = ? AND brokerName = ?''', (brokerClientId, brokerName))
+            '''SELECT COUNT(*) FROM users WHERE broker_client_id = ? AND broker_name = ?''', (broker_client_id, broker_name))
 
         user_exists = self.cursor.fetchone()[0]
 
@@ -125,20 +84,83 @@ class Sqlite(SqliteBase):
 
         created_at = get_local_datetime()
         self.cursor.execute('''
-                            INSERT INTO users (brokerClientId, brokerName, apiKey, apiSecret, isAdmin, created_at) 
+                            INSERT INTO users (broker_client_id, broker_name, api_key, api_secret, is_admin, created_at) 
                             VALUES (?, ?, ?, ?, ?, ?)
                             ''',
-                            (brokerClientId, brokerName, apiKey, apiSecret, isAdmin, created_at))
+                            (broker_client_id, broker_name, api_key, api_secret, is_admin, created_at))
         self.conn.commit()
         return {
             'error': False,
             'message': 'New user created'
         }
 
-    def update_user_token(self, brokerClientId: str, brokerName: str, accessToken: str):
+    def get_user(self, broker_client_id: str, broker_name: str):
+        self.cursor.execute(
+            '''SELECT * FROM users WHERE broker_client_id = ? AND broker_name = ?''', (broker_client_id, broker_name))
+
+        user = self.cursor.fetchone()
+
+        if user:
+            columns = [column[0] for column in self.cursor.description]
+            user_dict = dict(zip(columns, user))
+            return {
+                'error': False,
+                'message': '',
+                'data': user_dict
+            }
+        else:
+            return {
+                'error': True,
+                'message': 'User does not exist',
+                'data': {}
+            }
+
+    def get_all_users(self):
+        self.cursor.execute('''SELECT * FROM users''')
+        users = self.cursor.fetchall()
+
+        if users:
+            columns = [column[0] for column in self.cursor.description]
+            users_list = [dict(zip(columns, user)) for user in users]
+            return {
+                'error': False,
+                'message': '',
+                'data': users_list
+            }
+        else:
+            return {
+                'error': True,
+                'message': 'No users found',
+                'data': []
+            }
+
+    def delete_user(self, broker_client_id: str, broker_name: str):
         self.cursor.execute('''
-          SELECT COUNT(*) FROM users WHERE brokerClientId = ? AND brokerName = ?
-      ''', (brokerClientId, brokerName))
+            SELECT COUNT(*) FROM users WHERE broker_client_id = ? AND broker_name = ?
+        ''', (broker_client_id, broker_name))
+
+        user_exists = self.cursor.fetchone()[0]
+
+        if user_exists > 0:
+            self.cursor.execute('''
+                DELETE FROM users
+                WHERE broker_client_id = ? AND broker_name = ?
+            ''', (broker_client_id, broker_name))
+            self.conn.commit()
+            return {
+                'error': False,
+                'message': 'User deleted successfully.'
+            }
+        else:
+            return {
+                'error': True,
+                'message': 'User with the given clientId and broker does not exist.'
+            }
+
+    def update_user_token(self, broker_client_id: str, broker_name: str, access_token: str):
+        self.cursor.execute('''
+          SELECT COUNT(*) FROM users WHERE broker_client_id = ? AND broker_name = ?
+      ''', (broker_client_id, broker_name))
 
         user_exists = self.cursor.fetchone()[0]
 
@@ -146,9 +168,9 @@ class Sqlite(SqliteBase):
             time = get_local_datetime()
             self.cursor.execute('''
               UPDATE users
-              SET accessToken = ?, updated_at = ?             
-              WHERE brokerClientId = ? AND brokerName = ?
-          ''', (accessToken, time, brokerClientId, brokerName))
+              SET access_token = ?, updated_at = ?             
+              WHERE broker_client_id = ? AND broker_name = ?
+          ''', (access_token, time, broker_client_id, broker_name))
             self.conn.commit()
             return {
                 'error': False,
@@ -160,135 +182,103 @@ class Sqlite(SqliteBase):
                 'message': 'User with the given clientId and broker does not exist.'
             }
 
-    def store_client_instance(self, clientId, broker, instance):
+    def create_order(self, user_id: int, symbol: str, quantity: int, price: float, order_type: str) -> Dict[str, Any]:
         created_at = get_local_datetime()
-        self.cursor.execute('''INSERT INTO instances 
-                              (clientId, broker, instance, created_at) 
-                              VALUES (?, ?, ?, ?)''',
-                            (clientId, broker, instance, created_at))
+        self.cursor.execute('''
+            INSERT INTO orders (user_id, symbol, quantity, price, order_type, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (user_id, symbol, quantity, price, order_type, 'open', created_at))
         self.conn.commit()
-        pass
+        return {'error': False, 'message': 'Order created successfully', 'order_id': self.cursor.lastrowid}
 
-    def get_client_instance(self, clientId, broker):
+    def get_orders(self, user_id: int) -> Dict[str, Any]:
         self.cursor.execute(
-            'SELECT instance FROM instances WHERE clientId = ? AND broker = ?', (clientId, broker))
-        serialized_instance = self.cursor.fetchone()[0]
-        return serialized_instance
-
-    def store_instruments(self):
-        response = requests.get("http://api.kite.trade/instruments")
-        instruments = response.text.split('\n')
-        headers = instruments[0].split(',')
-        for instrument in instruments[1:]:
-            if instrument.strip():
-                instrument_data = dict(zip(headers, instrument.split(',')))
-                self.cursor.execute('''INSERT OR REPLACE INTO instruments VALUES (
-                                        :instrument_token, :exchange, :tradingsymbol, :name, :expiry, :strike, 
-                                        :tick_size, :lot_size, :instrument_type, :segment, :exchange_token)''',
-                                    instrument_data)
-        self.conn.commit()
-
-    def store_order(self, order_id, order_params, status):
-        self.cursor.execute('''INSERT INTO orders (order_id, order_params, status, placed_at)
-                               VALUES (?, ?, ?, ?)''',
-                            (order_id, str(order_params), status, datetime.now()))
-        self.conn.commit()
-
-    def today_stats(self):
-        """
-          abs_percentage: Absolute percentage (total profit/total capital invested) * 100 
-          best_win: Best pnl % of trades executed today 
-          total_trades: Total trades executed today
-          peak_gpu_load: Peak GPU load during trading hours
-          avg_gpu_load: Average GPU load during trading hours
-          total_comp_time: Total computational time
-          trade_sig_gen: Trades signal generation time
-          scs_rate: Total Success Rate of Trades
-
-          All values are rounded to 2 digits
-        """
-
-        data = {
-            "abs_percentage": 0,
-            "best_win": 0,
-            "total_trades": 0,
-            "peak_gpu_load": 0,
-            "avg_gpu_load": 0,
-            "total_comp_time": 0,
-            "trade_sig_gen": 0,
-            "scs_rate": 0
-        }
-        return data
-
-    # def create_backup(self):
-        users_data = []
-        mongo_db = MongoDb()
-        self.cursor.execute("SELECT * FROM users")
-        all_users = self.cursor.fetchall()
-        for user in all_users:
-            user_data = {
-                "id": user[0],
-                "position_data": user[1],
-                "closed_at": user[2]
-                # other fields
-            }
-            users_data.append(user_data)
-        mongo_db.store_users(users_data)
-
-        positions_data = []
-        self.cursor.execute("SELECT * FROM closed_positions")
-        closed_positions = self.cursor.fetchall()
-        for position in closed_positions:
-            position_data = {
-                "id": position[0],
-                "position_data": position[1],
-                "closed_at": position[2]
-            }
-            positions_data.append(position_data)
-        mongo_db.store_closed_position(positions_data)
-
-        greeks_data = []
-        self.cursor.execute("SELECT * FROM options_greeks")
-        options_greeks = self.cursor.fetchall()
-        for greek in options_greeks:
-            greek_data = {
-                "id": greek[0],
-                "tradingsymbol": greek[1],
-                "ltp": greek[2],
-                "delta": greek[3],
-                "gamma": greek[4],
-                "theta": greek[5],
-                "vega": greek[6],
-                "rho": greek[7],
-                "DATETIME": greek[8]
-            }
-            greeks_data.append(greek_data)
-        mongo_db.store_options_data(positions_data)
-
-        orders_data = []
-        self.cursor.execute("SELECT * FROM orders")
+            'SELECT * FROM orders WHERE user_id = ?', (user_id,))
         orders = self.cursor.fetchall()
-        for order in orders:
-            order_data = {
-                "order_id": order[0],
-                "order_params": order[1],
-                "status": order[2],
-                "placed_at": order[3]
-            }
-            orders_data.append(order_data)
-        mongo_db.store_orders(orders_data)
+        if orders:
+            columns = [column[0] for column in self.cursor.description]
+            orders_list = [dict(zip(columns, order)) for order in orders]
+            return {'error': False, 'data': orders_list}
+        return {'error': True, 'message': 'No orders found', 'data': []}
 
-        self.cursor.execute("DELETE FROM closed_positions")
-        self.cursor.execute("DELETE FROM options_greeks")
-        self.cursor.execute("DELETE FROM orders")
-        self.cursor.commit()
+    def get_order(self, order_id: int) -> Dict[str, Any]:
+        self.cursor.execute('SELECT * FROM orders WHERE id = ?', (order_id,))
+        order = self.cursor.fetchone()
+        if order:
+            columns = [column[0] for column in self.cursor.description]
+            order_dict = dict(zip(columns, order))
+            return {'error': False, 'data': order_dict}
+        return {'error': True, 'message': 'Order not found', 'data': {}}
 
-        self.close()
+    def update_order(self, order_id: int, status: str) -> Dict[str, Any]:
+        self.cursor.execute(
+            'UPDATE orders SET status = ? WHERE id = ?', (status, order_id))
+        self.conn.commit()
+        if self.cursor.rowcount > 0:
+            return {'error': False, 'message': 'Order updated successfully'}
+        return {'error': True, 'message': 'Order not found or not updated'}
+
+    def create_position(self, user_id: int, symbol: str, quantity: int, average_price: float) -> Dict[str, Any]:
+        created_at = get_local_datetime()
+        self.cursor.execute('''
+            INSERT INTO positions (user_id, symbol, quantity, average_price, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (user_id, symbol, quantity, average_price, created_at))
+        self.conn.commit()
+        return {'error': False, 'message': 'Position created successfully', 'position_id': self.cursor.lastrowid}
+
+    def get_positions(self, user_id: int) -> Dict[str, Any]:
+        self.cursor.execute(
+            'SELECT * FROM positions WHERE user_id = ?', (user_id,))
+        positions = self.cursor.fetchall()
+        if positions:
+            columns = [column[0] for column in self.cursor.description]
+            positions_list = [dict(zip(columns, position))
+                              for position in positions]
+            return {'error': False, 'data': positions_list}
+        return {'error': True, 'message': 'No positions found', 'data': []}
+
+    def get_position(self, position_id: int) -> Dict[str, Any]:
+        self.cursor.execute(
+            'SELECT * FROM positions WHERE id = ?', (position_id,))
+        position = self.cursor.fetchone()
+        if position:
+            columns = [column[0] for column in self.cursor.description]
+            position_dict = dict(zip(columns, position))
+            return {'error': False, 'data': position_dict}
+        return {'error': True, 'message': 'Position not found', 'data': {}}
+
+    def update_position(self, position_id: int, quantity: int, average_price: float) -> Dict[str, Any]:
+        self.cursor.execute('UPDATE positions SET quantity = ?, average_price = ? WHERE id = ?',
+                            (quantity, average_price, position_id))
+        self.conn.commit()
+        if self.cursor.rowcount > 0:
+            return {'error': False, 'message': 'Position updated successfully'}
+        return {'error': True, 'message': 'Position not found or not updated'}
+
+    def get_holdings(self, user_id: int) -> Dict[str, Any]:
+        self.cursor.execute(
+            'SELECT * FROM holdings WHERE user_id = ?', (user_id,))
+        holdings = self.cursor.fetchall()
+        if holdings:
+            columns = [column[0] for column in self.cursor.description]
+            holdings_list = [dict(zip(columns, holding))
+                             for holding in holdings]
+            return {'error': False, 'data': holdings_list}
+        return {'error': True, 'message': 'No holdings found', 'data': []}
+
+    def get_holding(self, holding_id: int) -> Dict[str, Any]:
+        self.cursor.execute(
+            'SELECT * FROM holdings WHERE id = ?', (holding_id,))
+        holding = self.cursor.fetchone()
+        if holding:
+            columns = [column[0] for column in self.cursor.description]
+            holding_dict = dict(zip(columns, holding))
+            return {'error': False, 'data': holding_dict}
+        return {'error': True, 'message': 'Holding not found', 'data': {}}
 
     def close(self):
         self.conn.close()
 
-    def shutdown_cleanup(self):
-        self.cursor.execute(f"DELETE FROM instruments")
-        self.cursor.execute(f"DELETE FROM clients")
-        self.cursor.commit()
+
+sqlite_db = Sqlite()
