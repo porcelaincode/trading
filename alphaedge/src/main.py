@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, WebSocket
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from config import env
 from contextlib import asynccontextmanager
 import logging
@@ -6,13 +6,19 @@ import logging
 from routes.auth import users
 from routes.brokers import icici
 
+from socket.broker import connect_marketdata, clean_sockets
+from socket.server import consume_broadcast_signals, manager
+
 logging.basicConfig(level=logging.INFO)
 fastapi_logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    connect_marketdata()
+    consume_broadcast_signals()
     yield
+    clean_sockets()
 
 app = FastAPI(lifespan=lifespan, debug=True)
 
@@ -28,6 +34,16 @@ async def log_requests(request: Request, call_next):
 app.include_router(users.router, prefix="/api/v1/auth/users")
 
 app.include_router(icici.router, prefix="/api/v1/brokers/icici")
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 if __name__ == "__main__":
     import uvicorn

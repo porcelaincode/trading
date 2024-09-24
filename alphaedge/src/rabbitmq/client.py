@@ -103,3 +103,4 @@ rabbitmq_client = RabbitMQClient()
 
 rabbitmq_client.declare_queue('app')
 rabbitmq_client.declare_queue('auth')
+rabbitmq_client.declare_queue('broadcast_signals')

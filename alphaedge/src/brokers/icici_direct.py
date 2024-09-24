@@ -23,14 +23,14 @@ class IciciBreeze(BrokerBase):
             'Initialized breeze session for client: ', self.clientId)
         return {'message': f'Initialized breeze client for {self.clientId}. Please go to https://api.icicidirect.com/apiuser/login?api_key={api_key} to initialize login'}
 
-    def authorize(self, secret_key, session_token):
+    def authorize(self, secret_key, session_token, handle_ticks):
         message = ''
         try:
             self.breeze.generate_session(api_secret=secret_key,
                                          session_token=session_token)
             message = f'Initialized breeze session for client: {self.clientId}'
             icici_direct_logger.info(message, self.clientId)
-            self.breeze.on_ticks = self.on_tick_data
+            self.breeze.on_ticks = handle_ticks
             self.breeze.ws_connect()
 
             message = {
@@ -48,10 +48,6 @@ class IciciBreeze(BrokerBase):
     def cleanup(self):
         self.breeze.ws_disconnect()
         pass
-
-    def on_tick_data(self, ticks):
-        print('ticks: ', ticks)
-        return
 
     def subscribe(self):
         return {}
