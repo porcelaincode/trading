@@ -3,7 +3,7 @@ import threading
 import asyncio
 from brokers.icici_direct import IciciBreeze
 
-from config import env
+from ..config import env
 
 logging.basicConfig(level=logging.INFO)
 ws_logger = logging.getLogger("broker_ws")
@@ -12,7 +12,7 @@ ws_logger = logging.getLogger("broker_ws")
 class BrokerWebSocketManager:
     def __init__(self):
         self.client = IciciBreeze(clientId=env.MARKETDATA_CLIENT_ID)
-        self.client.initialize(api_key=env.MARKETDATA_API_KEY)
+        self.client.initialize(api_key=env.MARKETDATA_APP_KEY)
 
     def connect(self):
         self.client.authorize(secret_key=env.MARKETDATA_SECRET_KEY,

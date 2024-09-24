@@ -3,7 +3,7 @@ import logging
 
 import redis
 
-from config import env
+from ..config import env
 
 logging.basicConfig(level=logging.INFO)
 redis_logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 import threading
 import pika
-from config import env
+from ..config import env
 from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker, ConnectionWrongStateError
 import time
 import logging

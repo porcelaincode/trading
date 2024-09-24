@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, Request
 
-from database import sqlite_db
+from ...database import sqlite_db
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)

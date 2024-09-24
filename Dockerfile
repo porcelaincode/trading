@@ -2,13 +2,13 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY ./alphaedge/requirements.txt /app/
+COPY ./requirements.txt /app/
 
 ENV PYTHONPATH=/app/src
 
 RUN pip install --no-deps -r requirements.txt
 
-COPY ./alphaedge/src /app/
+COPY ./src /app/
 
 EXPOSE 8000
 

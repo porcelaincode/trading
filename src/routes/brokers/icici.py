@@ -5,8 +5,8 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from rabbitmq import rabbitmq_client
-from database import sqlite_db
+from ...rabbitmq import rabbitmq_client
+from ...database import sqlite_db
 
 logging.basicConfig(level=logging.INFO)
 icici_router = logging.getLogger(__name__)

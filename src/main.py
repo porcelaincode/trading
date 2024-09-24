@@ -1,13 +1,19 @@
+
+import sys  # noqa
+import os  # noqa
+sys.path.append(os.path.abspath(
+    os.path.join(os.path.dirname(__file__), 'src')))  # noqa
+
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from config import env
+from .config import env
 from contextlib import asynccontextmanager
 import logging
 
-from routes.auth import users
-from routes.brokers import icici
+from .routes.auth import users
+from .routes.brokers import icici
 
-from socket.broker import connect_marketdata, clean_sockets
-from socket.server import consume_broadcast_signals, manager
+from .socket.broker import connect_marketdata, clean_sockets
+from .socket.server import consume_broadcast_signals, manager
 
 logging.basicConfig(level=logging.INFO)
 fastapi_logger = logging.getLogger(__name__)

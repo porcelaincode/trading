@@ -4,8 +4,8 @@ from typing import Dict, List, Any
 
 # project imports
 from .sqlite_base import SqliteBase
-from config import env
-from utils import get_local_datetime
+from ..config import env
+from ..utils import get_local_datetime
 
 
 class Sqlite(SqliteBase):

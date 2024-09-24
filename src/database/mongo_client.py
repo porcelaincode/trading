@@ -3,7 +3,7 @@ import logging
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 
-from config import env
+from ..config import env
 
 logging.basicConfig(level=logging.INFO)
 mongo_logger = logging.getLogger(__name__)
