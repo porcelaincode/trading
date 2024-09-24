@@ -3,10 +3,10 @@ services:
   fastapi:
     build:
       context: ./
-      dockerfile: ./alphaedge/Dockerfile
+      dockerfile: ./Dockerfile
     container_name: alphaedge_fastapi
     env_file:
-      - ./alphaedge/.env
+      - ./.env
     ports:
       - '${PORT}:${PORT}'
     environment:
@@ -19,7 +19,7 @@ services:
       - RABBITMQ_USER=$RABBITMQ_USER
       - RABBITMQ_PASS=$RABBITMQ_PASS
     volumes:
-      - ./alphaedge/src:/app
+      - ./src:/app
     depends_on:
       - rabbitmq
       - redis
