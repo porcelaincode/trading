@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 mongo_logger = logging.getLogger(__name__)
 
 mongo_connection_string = env.MONGO_CONNECTION_STRING
-mongo_db_name = env.MONGO_DB_NAME
+mongo_db_name = env.DATABASE_NAME
 
 
 class MongoDBClient:

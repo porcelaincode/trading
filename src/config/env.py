@@ -22,7 +22,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 # mongo connection string
 MONGO_CONNECTION_STRING = os.getenv('MONGO_CONNECTION_STRING')
-MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
+DATABASE_NAME = os.getenv('DATABASE_NAME')
 
 # marketdata envs
 MARKETDATA_CLIENT_ID = os.getenv('MARKETDATA_CLIENT_ID')

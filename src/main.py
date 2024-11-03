@@ -38,7 +38,6 @@ async def log_requests(request: Request, call_next):
 
 
 app.include_router(users.router, prefix="/api/v1/auth/users")
-
 app.include_router(icici.router, prefix="/api/v1/brokers/icici")
 
 
